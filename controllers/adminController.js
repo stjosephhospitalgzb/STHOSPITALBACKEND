@@ -52,17 +52,19 @@ const createDefaultAdmin = async () => {
 };
 
 
+// Add this to the module.exports at the bottom
 const getStats = async (req, res) => {
   try {
     const doctors = await Doctor.countDocuments();
-    // const gallery = await Gallery?.countDocuments() || 0;
-    // const careers = await Career?.countDocuments() || 0;
-    res.json({ doctors, gallery: 0, careers: 0 });
+    const gallery = await Gallery?.countDocuments() || 0;
+    const careers = await Job?.countDocuments() || 0;   // if Job model exists
+    res.json({ doctors, gallery, careers });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+module.exports = { adminLogin, createDefaultAdmin, getStats };
 
-module.exports = { adminLogin, createDefaultAdmin };
+
