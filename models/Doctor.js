@@ -10,6 +10,7 @@ const doctorSchema = new mongoose.Schema({
   img: { type: String, required: true }, // Cloudinary URL
   about: { type: String, required: true },
   opdTimings: { type: String, required: true },
+  roomNo: { type: String, required: true } // ✅ NEW FIELD - Room Number
 }, { timestamps: true });
 
 module.exports = mongoose.model("Doctor", doctorSchema);

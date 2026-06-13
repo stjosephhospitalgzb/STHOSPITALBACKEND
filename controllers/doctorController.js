@@ -27,7 +27,7 @@ const getDoctorById = async (req, res) => {
 // ADMIN: add new doctor (with image upload)
 const addDoctor = async (req, res) => {
   try {
-    const { name, qual, dept, exp, rating, reviews, about, opdTimings } = req.body;
+    const { name, qual, dept, exp, rating, reviews, about, opdTimings, roomNo } = req.body;
     if (!req.file) return res.status(400).json({ message: "Image file is required" });
 
     // Upload to Cloudinary
@@ -44,6 +44,7 @@ const addDoctor = async (req, res) => {
       img: imgUrl,
       about,
       opdTimings,
+      roomNo, // ✅ NEW FIELD
     });
     await doctor.save();
 
@@ -60,7 +61,7 @@ const updateDoctor = async (req, res) => {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    const { name, qual, dept, exp, rating, reviews, about, opdTimings } = req.body;
+    const { name, qual, dept, exp, rating, reviews, about, opdTimings, roomNo } = req.body;
 
     // Update fields
     doctor.name = name || doctor.name;
@@ -71,6 +72,7 @@ const updateDoctor = async (req, res) => {
     doctor.reviews = reviews ? Number(reviews) : doctor.reviews;
     doctor.about = about || doctor.about;
     doctor.opdTimings = opdTimings || doctor.opdTimings;
+    doctor.roomNo = roomNo || doctor.roomNo; // ✅ NEW FIELD
 
     // If new image uploaded, upload and replace URL
     if (req.file) {
