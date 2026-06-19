@@ -61,9 +61,8 @@ const updateDoctor = async (req, res) => {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    const { name, qual, dept, exp, rating, reviews, about, opdTimings, roomNo } = req.body;
+    const { name, qual, dept, exp, rating, reviews, about, opdTimings } = req.body;
 
-    // Update fields
     doctor.name = name || doctor.name;
     doctor.qual = qual || doctor.qual;
     doctor.dept = dept || doctor.dept;
@@ -72,9 +71,12 @@ const updateDoctor = async (req, res) => {
     doctor.reviews = reviews ? Number(reviews) : doctor.reviews;
     doctor.about = about || doctor.about;
     doctor.opdTimings = opdTimings || doctor.opdTimings;
-    doctor.roomNo = roomNo || doctor.roomNo; // ✅ NEW FIELD
 
-    // If new image uploaded, upload and replace URL
+    // ✅ FIX: update roomNo only if provided
+    if (req.body.roomNo !== undefined && req.body.roomNo !== null) {
+      doctor.roomNo = req.body.roomNo.trim();
+    }
+
     if (req.file) {
       const result = await uploadImage(req.file.buffer, "doctors");
       doctor.img = result.secure_url;
