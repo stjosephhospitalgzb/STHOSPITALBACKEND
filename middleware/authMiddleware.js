@@ -1,9 +1,14 @@
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
+const Staff = require("../models/Staff");
 
+/**
+ * @desc   Protect middleware - Decodes token and verifies user exists in database
+ */
 exports.protect = async (req, res, next) => {
   let token;
 
+  // 1. Check if token exists in the Authorization header
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -16,38 +21,59 @@ exports.protect = async (req, res, next) => {
   }
 
   try {
+    // 2. Verify the JWT Token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Only check Admin – no student lookup
-    const user = await Admin.findById(decoded.id).select("-password");
-    if (!user) {
-      return res.status(401).json({ message: "Token invalid, user not found" });
+    // 3. Inspect the role from token payload and find user in respective collection
+    let dbUser = null;
+    const userRole = decoded.role || "admin"; // Default fallback to admin if role is missing
+
+    if (userRole === "admin") {
+      dbUser = await Admin.findById(decoded.id).select("-password");
+    } else if (userRole === "staff") {
+      dbUser = await Staff.findById(decoded.id).select("-password");
     }
 
-    req.user = { id: user._id, email: user.email, role: "admin" };
+    // If token passed decryption but user no longer exists in MongoDB
+    if (!dbUser) {
+      return res.status(401).json({ message: "Token invalid, user account not found" });
+    }
+
+    // 4. Attach formatted user object info securely to request pipeline
+    req.user = { 
+      id: dbUser._id, 
+      email: dbUser.email, 
+      role: userRole 
+    };
+
     next();
   } catch (error) {
-    console.error("JWT Error:", error);
+    console.error("JWT Authentication Error:", error.message);
     return res.status(401).json({ message: "Token invalid or expired" });
   }
 };
 
-// Authorize middleware (now expects only 'admin')
+/**
+ * @desc   Role Authorization middleware - Restricts access to specific roles
+ * @param  {...string} roles - Allowed roles (e.g., 'admin', 'staff')
+ */
 exports.authorize = (...roles) => {
   return (req, res, next) => {
+    // Safety check to ensure protect ran first
     if (!req.user || !req.user.role) {
       return res.status(403).json({ message: "Authorization failed: Role not determined." });
     }
 
-    const userRole = req.user.role;
-    if (!roles.includes(userRole)) {
+    // Check if user's role is permitted to hit this route
+    if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `Forbidden: User role ${userRole} is not authorized to access this resource.`,
+        message: `Forbidden: User role '${req.user.role}' is not authorized to access this resource.`,
       });
     }
     next();
   };
 };
 
-// If you had studentAuth, remove it or keep as admin-only
+// Shortcut helper arrays for clean routing configuration files
 exports.adminAuth = [exports.protect, exports.authorize("admin")];
+exports.staffAuth = [exports.protect, exports.authorize("admin", "staff")];

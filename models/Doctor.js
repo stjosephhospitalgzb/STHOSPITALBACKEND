@@ -10,6 +10,14 @@ const doctorSchema = new mongoose.Schema({
   img: { type: String, required: true }, // Cloudinary URL
   about: { type: String, required: true },
   opdTimings: { type: String, required: true },
+ isOnLeave: { type: Boolean, default: false },
+leaveDetails: {
+  startDate: Date,
+  endDate: Date,
+  reason: String,
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' },
+  updatedAt: Date,
+},
   roomNo: { type: String, required: true } // ✅ NEW FIELD - Room Number
 }, { timestamps: true });
 
