@@ -11,7 +11,6 @@ const getDoctors = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 // ADMIN: get single doctor by ID
 const getDoctorById = async (req, res) => {
   try {
